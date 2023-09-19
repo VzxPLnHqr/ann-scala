@@ -28,7 +28,7 @@ object AnnSecp256k1 extends IOApp.Simple:
    * hidden layer(s) just sort of chosen arbitrarily here
    * output layer is 256 bits = dlog(P) with base point G
    * */
-  val randNet = IO(Net(List(1024,1024+512,256), seed = 15432))
+  val randNet = IO(Net(List(1024,1024+512,1024+512,256), seed = 15432))
 
   def fitToPoint(net: Net, k: Z_n, learningRate: Double = 0.01): IO[Net] = for {
     pt <- IO(k * G)
@@ -57,11 +57,11 @@ object AnnSecp256k1 extends IOApp.Simple:
       ks <- LazyList.range(0,100000).parTraverse{_ => Z_n.rand }
       fittedNet <- ks.zipWithIndex.foldLeftM(net) {
         case (accumNet, (k, i)) => 
-          fitToPoint(accumNet,k,learningRate = 0.0001)
+          fitToPoint(accumNet,k,learningRate = 0.01)
               .flatTap {
                 testnet => if(i % 10 == 0)
                             IO.println(s"===== Test $i ")
-                              *> (if(i % 100 == 0) 
+                              *> (if(i % 1000 == 0) 
                                     writeBestToFile(testnet)
                                   else
                                     IO.unit)
